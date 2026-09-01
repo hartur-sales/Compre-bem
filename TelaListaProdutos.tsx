@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,8 +7,20 @@ import {
   Button,
   TouchableOpacity,
   FlatList,
+  TextInput,
+  Keyboard,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+const cores = {
+  fundo: '#150B10',
+  borda: '#3D1B2A',
+  vinho: '#8E2949',
+  textoPrimario: '#F4E3E8',
+  textoSecundario: '#C9A9B4',
+  preco: '#8FD9A8',
+  erro: '#E57373',
+};
 
 export type Produto = {
   id: number;
@@ -61,6 +73,8 @@ type RootStackParamList = {
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Lista'>;
+  produtos: Produto[];
+  onAdicionarProduto: (produto: Produto) => void;
 };
 
 function ProdutoItem({
@@ -80,7 +94,7 @@ function ProdutoItem({
         <Text style={styles.nome}>{produto.nome}</Text>
         <Text style={styles.categoria}>{produto.categoria}</Text>
         <Text style={styles.preco}>R$ {produto.preco.toFixed(2)}</Text>
-        <Text>Qtd: {quantidade}</Text>
+        <Text style={styles.categoria}>Qtd: {quantidade}</Text>
       </View>
       <View>
         <Button
@@ -97,18 +111,73 @@ function ProdutoItem({
   );
 }
 
-export default function TelaListaProdutos({ navigation }: Props) {
+export default function TelaListaProdutos({ navigation, produtos, onAdicionarProduto }: Props) {
+  const [nome, setNome] = useState('');
+  const [preco, setPreco] = useState('');
+  const [erro, setErro] = useState('');
+  const inputPrecoRef = useRef<TextInput>(null);
+
+  function validarESalvar() {
+    if (nome.trim() === '') {
+      setErro('O nome não pode ficar vazio.');
+      return;
+    }
+    const precoNumerico = Number(preco.trim().replace(',', '.'));
+    if (preco.trim() === '' || isNaN(precoNumerico) || precoNumerico <= 0) {
+      setErro('O preço precisa ser um número maior que zero (ex.: 89,90).');
+      return;
+    }
+    onAdicionarProduto({
+      id: Date.now(),
+      nome,
+      preco: precoNumerico,
+      categoria: 'Geral',
+      descricao: 'Produto cadastrado pela equipe da loja.',
+      imagem: 'https://placehold.co/100x100',
+    });
+    setNome('');
+    setPreco('');
+    setErro('');
+    Keyboard.dismiss();
+  }
+
   return (
     <FlatList
       style={styles.container}
-      data={produtosMock}
+      data={produtos}
       keyExtractor={(item) => String(item.id)}
+      ListHeaderComponent={
+        <View style={styles.cadastro}>
+          <TextInput
+            style={styles.input}
+            placeholder="Nome do novo produto"
+            placeholderTextColor={cores.textoSecundario}
+            value={nome}
+            onChangeText={setNome}
+            returnKeyType="next"
+            onSubmitEditing={() => inputPrecoRef.current?.focus()}
+          />
+          <TextInput
+            ref={inputPrecoRef}
+            style={styles.input}
+            placeholder="Preço (ex.: 89,90)"
+            placeholderTextColor={cores.textoSecundario}
+            value={preco}
+            onChangeText={setPreco}
+            keyboardType="decimal-pad"
+            returnKeyType="done"
+            onSubmitEditing={validarESalvar}
+          />
+          {erro !== '' && <Text style={styles.erro}>{erro}</Text>}
+          <TouchableOpacity style={styles.botao} onPress={validarESalvar}>
+            <Text style={styles.botaoTexto}>Cadastrar produto</Text>
+          </TouchableOpacity>
+        </View>
+      }
       renderItem={({ item }) => (
         <ProdutoItem
           produto={item}
-          onPress={() =>
-            navigation.navigate('Detalhe', { produtoId: item.id })
-          }
+          onPress={() => navigation.navigate('Detalhe', { produtoId: item.id })}
         />
       )}
     />
@@ -119,7 +188,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: cores.fundo,
+  },
+  cadastro: {
+    marginBottom: 20,
+    gap: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: cores.borda,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    color: cores.textoPrimario,
+  },
+  erro: {
+    color: cores.erro,
+  },
+  botao: {
+    backgroundColor: cores.vinho,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  botaoTexto: {
+    color: cores.textoPrimario,
+    fontWeight: '600',
   },
   item: {
     flexDirection: 'row',
@@ -127,7 +221,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: cores.borda,
   },
   image: {
     width: 64,
@@ -141,17 +235,17 @@ const styles = StyleSheet.create({
   nome: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1B3A5C',
+    color: cores.textoPrimario,
   },
   categoria: {
     fontSize: 13,
-    color: '#666',
+    color: cores.textoSecundario,
     marginTop: 2,
   },
   preco: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: cores.preco,
     marginTop: 4,
   },
 });
