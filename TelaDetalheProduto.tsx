@@ -1,16 +1,16 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from './App';
 import type { Produto } from './TelaListaProdutos';
 
 function DetalheProduto({ produto }: { produto: Produto }) {
   return (
-      <View style={styles.container}>
-        <Image source={produto.imagem} style={styles.imagem} />
+      <ScrollView contentContainerStyle={styles.container}>
+        <Image source={produto.imagem} style={styles.imagem} resizeMode="cover" />
         <Text style={styles.nome}>{produto.nome}</Text>
-        <Text style={styles.preco}>{produto.preco}</Text>
+        <Text style={styles.preco}>R$ {produto.preco.toFixed(2)}</Text>
         <Text style={styles.descricao}>{produto.descricao}</Text>
-      </View>
+      </ScrollView>
   );
 }
 
@@ -47,6 +47,7 @@ const styles = StyleSheet.create({
   imagem: {
     width: '100%',
     aspectRatio: 4 / 3,
+    maxHeight: 320,
     borderRadius: 8,
     marginBottom: 16,
   },

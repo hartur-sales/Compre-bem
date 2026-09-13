@@ -12,6 +12,7 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from './App';
 
 const imagemPadrao = require('./assets/icon.png') as ImageSourcePropType;
 
@@ -69,21 +70,16 @@ export const produtosIniciais: Produto[] = [
   },
 ];
 
-type RootStackParamList = {
-  Lista: undefined;
-  Detalhe: { produtoId: number };
-};
-
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'Lista'>;
+  navigation: NativeStackNavigationProp<RootStackParamList, 'ListaProdutos'>;
   produtos: Produto[];
   onAdicionarProduto: (produto: Produto) => void;
 };
 
 function ProdutoItem({
-  produto,
-  onPress,
-}: {
+                       produto,
+                       onPress,
+                     }: {
   produto: Produto;
   onPress: () => void;
 }) {
@@ -91,26 +87,26 @@ function ProdutoItem({
   const [quantidade, setQuantidade] = useState(0);
 
   return (
-    <TouchableOpacity style={styles.item} onPress={onPress}>
-      <Image source={produto.imagem} style={styles.image} />
-      <View style={styles.info}>
-        <Text style={styles.nome}>{produto.nome}</Text>
-        <Text style={styles.categoria}>{produto.categoria}</Text>
-        <Text style={styles.preco}>R$ {produto.preco.toFixed(2)}</Text>
-        <Text style={styles.categoria}>Qtd: {quantidade}</Text>
-      </View>
-      <View>
-        <Button
-          title={favorito ? '♥' : '♡'}
-          onPress={() => setFavorito(!favorito)}
-        />
-        <Button title="+" onPress={() => setQuantidade(quantidade + 1)} />
-        <Button
-          title="-"
-          onPress={() => setQuantidade(Math.max(0, quantidade - 1))}
-        />
-      </View>
-    </TouchableOpacity>
+      <TouchableOpacity style={styles.item} onPress={onPress}>
+        <Image source={produto.imagem} style={styles.image} />
+        <View style={styles.info}>
+          <Text style={styles.nome}>{produto.nome}</Text>
+          <Text style={styles.categoria}>{produto.categoria}</Text>
+          <Text style={styles.preco}>R$ {produto.preco.toFixed(2)}</Text>
+          <Text style={styles.categoria}>Qtd: {quantidade}</Text>
+        </View>
+        <View>
+          <Button
+              title={favorito ? '♥' : '♡'}
+              onPress={() => setFavorito(!favorito)}
+          />
+          <Button title="+" onPress={() => setQuantidade(quantidade + 1)} />
+          <Button
+              title="-"
+              onPress={() => setQuantidade(Math.max(0, quantidade - 1))}
+          />
+        </View>
+      </TouchableOpacity>
   );
 }
 
@@ -125,7 +121,15 @@ export default function TelaListaProdutos({ navigation, produtos, onAdicionarPro
       setErro('O nome não pode ficar vazio.');
       return;
     }
-    const precoNumerico = Number(preco.trim().replace(',', '.'));
+
+    if (preco.trim() === '') {
+      setErro('O preço não pode ficar vazio.');
+      return;
+    }
+
+    const precoNumerico = Number(
+        preco.trim().replace(/\./g, '').replace(',', '.')
+    );
     if (preco.trim() === '' || isNaN(precoNumerico) || precoNumerico <= 0) {
       setErro('O preço precisa ser um número maior que zero (ex.: 89,90).');
       return;
@@ -145,45 +149,45 @@ export default function TelaListaProdutos({ navigation, produtos, onAdicionarPro
   }
 
   return (
-    <FlatList
-      style={styles.container}
-      data={produtos}
-      keyExtractor={(item) => String(item.id)}
-      ListHeaderComponent={
-        <View style={styles.cadastro}>
-          <TextInput
-            style={styles.input}
-            placeholder="Nome do novo produto"
-            placeholderTextColor={cores.textoSecundario}
-            value={nome}
-            onChangeText={setNome}
-            returnKeyType="next"
-            onSubmitEditing={() => inputPrecoRef.current?.focus()}
-          />
-          <TextInput
-            ref={inputPrecoRef}
-            style={styles.input}
-            placeholder="Preço (ex.: 89,90)"
-            placeholderTextColor={cores.textoSecundario}
-            value={preco}
-            onChangeText={setPreco}
-            keyboardType="decimal-pad"
-            returnKeyType="done"
-            onSubmitEditing={validarESalvar}
-          />
-          {erro !== '' && <Text style={styles.erro}>{erro}</Text>}
-          <TouchableOpacity style={styles.botao} onPress={validarESalvar}>
-            <Text style={styles.botaoTexto}>Cadastrar produto</Text>
-          </TouchableOpacity>
-        </View>
-      }
-      renderItem={({ item }) => (
-        <ProdutoItem
-          produto={item}
-          onPress={() => navigation.navigate('Detalhe', { produtoId: item.id })}
-        />
-      )}
-    />
+      <FlatList
+          style={styles.container}
+          data={produtos}
+          keyExtractor={(item) => String(item.id)}
+          ListHeaderComponent={
+            <View style={styles.cadastro}>
+              <TextInput
+                  style={styles.input}
+                  placeholder="Nome do novo produto"
+                  placeholderTextColor={cores.textoSecundario}
+                  value={nome}
+                  onChangeText={setNome}
+                  returnKeyType="next"
+                  onSubmitEditing={() => inputPrecoRef.current?.focus()}
+              />
+              <TextInput
+                  ref={inputPrecoRef}
+                  style={styles.input}
+                  placeholder="Preço (ex.: 89,90)"
+                  placeholderTextColor={cores.textoSecundario}
+                  value={preco}
+                  onChangeText={setPreco}
+                  keyboardType="decimal-pad"
+                  returnKeyType="done"
+                  onSubmitEditing={validarESalvar}
+              />
+              {erro !== '' && <Text style={styles.erro}>{erro}</Text>}
+              <TouchableOpacity style={styles.botao} onPress={validarESalvar}>
+                <Text style={styles.botaoTexto}>Cadastrar produto</Text>
+              </TouchableOpacity>
+            </View>
+          }
+          renderItem={({ item }) => (
+              <ProdutoItem
+                  produto={item}
+                  onPress={() => navigation.navigate('DetalheProduto', { produtoId: item.id })}
+              />
+          )}
+      />
   );
 }
 

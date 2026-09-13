@@ -5,8 +5,6 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import TelaListaProdutos, {produtosIniciais, type Produto} from './TelaListaProdutos';
 import TelaDetalheProduto from './TelaDetalheProduto';
 
-const TelaDetalheProdutoCompat = TelaDetalheProduto as any;
-
 export type RootStackParamList = {
     ListaProdutos: undefined;
     DetalheProduto: { produtoId: number } | undefined;
@@ -30,7 +28,7 @@ export default function App() {
                         )}
                     </Stack.Screen>
                     <Stack.Screen name="DetalheProduto">
-                        {(props) => <TelaDetalheProdutoCompat {...props} produtos={produtos} />}
+                        {(props) => <TelaDetalheProduto {...props} produtos={produtos} />}
                     </Stack.Screen>
                 </Stack.Navigator>
             </NavigationContainer>
