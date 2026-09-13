@@ -5,6 +5,12 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 import TelaListaProdutos, {produtosIniciais, type Produto} from './TelaListaProdutos';
 import TelaDetalheProduto from './TelaDetalheProduto';
 
+const cores = {
+    fundo: '#1C1712',
+    superficie: '#2A2119',
+    textoPrimario: '#F3ECE0',
+};
+
 export type RootStackParamList = {
     ListaProdutos: undefined;
     DetalheProduto: { produtoId: number } | undefined;
@@ -21,13 +27,22 @@ export default function App() {
     return (
         <SafeAreaProvider>
             <NavigationContainer>
-                <Stack.Navigator initialRouteName="ListaProdutos">
-                    <Stack.Screen name="ListaProdutos">
+                <Stack.Navigator
+                    initialRouteName="ListaProdutos"
+                    screenOptions={{
+                        headerStyle: { backgroundColor: cores.superficie },
+                        headerTintColor: cores.textoPrimario,
+                        headerTitleStyle: { fontWeight: '600' },
+                        headerShadowVisible: false,
+                        contentStyle: { backgroundColor: cores.fundo },
+                    }}
+                >
+                    <Stack.Screen name="ListaProdutos" options={{ title: 'Produtos' }}>
                         {(props) => (
                             <TelaListaProdutos {...props} produtos={produtos} onAdicionarProduto={adicionarProduto}/>
                         )}
                     </Stack.Screen>
-                    <Stack.Screen name="DetalheProduto">
+                    <Stack.Screen name="DetalheProduto" options={{ title: 'Detalhes do produto' }}>
                         {(props) => <TelaDetalheProduto {...props} produtos={produtos} />}
                     </Stack.Screen>
                 </Stack.Navigator>

@@ -4,7 +4,6 @@ import {
   Text,
   View,
   Image,
-  Button,
   TouchableOpacity,
   FlatList,
   TextInput,
@@ -17,13 +16,14 @@ import type { RootStackParamList } from './App';
 const imagemPadrao = require('./assets/icon.png') as ImageSourcePropType;
 
 const cores = {
-  fundo: '#150B10',
-  borda: '#3D1B2A',
-  vinho: '#8E2949',
-  textoPrimario: '#F4E3E8',
-  textoSecundario: '#C9A9B4',
-  preco: '#8FD9A8',
-  erro: '#E57373',
+  fundo: '#1C1712',
+  superficie: '#2A2119',
+  borda: '#4A3B2A',
+  destaque: '#7A4E1E',
+  textoPrimario: '#F3ECE0',
+  textoSecundario: '#B9A88F',
+  preco: '#8FB996',
+  erro: '#D96C5B',
 };
 
 export type Produto = {
@@ -87,24 +87,42 @@ function ProdutoItem({
   const [quantidade, setQuantidade] = useState(0);
 
   return (
-      <TouchableOpacity style={styles.item} onPress={onPress}>
+      <TouchableOpacity style={styles.item} onPress={onPress} activeOpacity={0.85}>
         <Image source={produto.imagem} style={styles.image} />
         <View style={styles.info}>
-          <Text style={styles.nome}>{produto.nome}</Text>
+          <Text style={styles.nome} numberOfLines={1}>
+            {produto.nome}
+          </Text>
           <Text style={styles.categoria}>{produto.categoria}</Text>
           <Text style={styles.preco}>R$ {produto.preco.toFixed(2)}</Text>
-          <Text style={styles.categoria}>Qtd: {quantidade}</Text>
         </View>
-        <View>
-          <Button
-              title={favorito ? '♥' : '♡'}
+        <View style={styles.acoes}>
+          <TouchableOpacity
+              style={styles.botaoFavorito}
               onPress={() => setFavorito(!favorito)}
-          />
-          <Button title="+" onPress={() => setQuantidade(quantidade + 1)} />
-          <Button
-              title="-"
-              onPress={() => setQuantidade(Math.max(0, quantidade - 1))}
-          />
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={[styles.favoritoTexto, favorito && styles.favoritoAtivo]}>
+              {favorito ? '♥' : '♡'}
+            </Text>
+          </TouchableOpacity>
+          <View style={styles.stepper}>
+            <TouchableOpacity
+                style={styles.stepperBotao}
+                onPress={() => setQuantidade(Math.max(0, quantidade - 1))}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Text style={styles.stepperTexto}>−</Text>
+            </TouchableOpacity>
+            <Text style={styles.stepperValor}>{quantidade}</Text>
+            <TouchableOpacity
+                style={styles.stepperBotao}
+                onPress={() => setQuantidade(quantidade + 1)}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Text style={styles.stepperTexto}>+</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </TouchableOpacity>
   );
@@ -151,10 +169,12 @@ export default function TelaListaProdutos({ navigation, produtos, onAdicionarPro
   return (
       <FlatList
           style={styles.container}
+          contentContainerStyle={styles.listaConteudo}
           data={produtos}
           keyExtractor={(item) => String(item.id)}
           ListHeaderComponent={
             <View style={styles.cadastro}>
+              <Text style={styles.cadastroTitulo}>Novo produto</Text>
               <TextInput
                   style={styles.input}
                   placeholder="Nome do novo produto"
@@ -176,7 +196,7 @@ export default function TelaListaProdutos({ navigation, produtos, onAdicionarPro
                   onSubmitEditing={validarESalvar}
               />
               {erro !== '' && <Text style={styles.erro}>{erro}</Text>}
-              <TouchableOpacity style={styles.botao} onPress={validarESalvar}>
+              <TouchableOpacity style={styles.botao} onPress={validarESalvar} activeOpacity={0.85}>
                 <Text style={styles.botaoTexto}>Cadastrar produto</Text>
               </TouchableOpacity>
             </View>
@@ -194,65 +214,135 @@ export default function TelaListaProdutos({ navigation, produtos, onAdicionarPro
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: cores.fundo,
   },
+  listaConteudo: {
+    padding: 16,
+  },
   cadastro: {
-    marginBottom: 20,
+    backgroundColor: cores.superficie,
+    borderWidth: 1,
+    borderColor: cores.borda,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
     gap: 8,
+  },
+  cadastroTitulo: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: cores.textoPrimario,
+    marginBottom: 4,
   },
   input: {
     borderWidth: 1,
     borderColor: cores.borda,
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     color: cores.textoPrimario,
+    backgroundColor: cores.fundo,
   },
   erro: {
     color: cores.erro,
+    fontSize: 13,
   },
   botao: {
-    backgroundColor: cores.vinho,
-    borderRadius: 8,
-    paddingVertical: 10,
+    backgroundColor: cores.destaque,
+    borderRadius: 10,
+    paddingVertical: 12,
     alignItems: 'center',
+    marginTop: 4,
   },
   botaoTexto: {
     color: cores.textoPrimario,
     fontWeight: '600',
+    fontSize: 15,
   },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: cores.borda,
+    backgroundColor: cores.superficie,
+    borderWidth: 1,
+    borderColor: cores.borda,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   image: {
-    width: 64,
-    height: 64,
-    borderRadius: 8,
+    width: 72,
+    height: 72,
+    borderRadius: 10,
     marginRight: 12,
+    backgroundColor: cores.fundo,
   },
   info: {
     flex: 1,
+    gap: 2,
   },
   nome: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: cores.textoPrimario,
   },
   categoria: {
     fontSize: 13,
     color: cores.textoSecundario,
-    marginTop: 2,
   },
   preco: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
     color: cores.preco,
-    marginTop: 4,
+    marginTop: 2,
+  },
+  acoes: {
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    height: 72,
+  },
+  botaoFavorito: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  favoritoTexto: {
+    fontSize: 20,
+    color: cores.textoSecundario,
+  },
+  favoritoAtivo: {
+    color: cores.destaque,
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: cores.fundo,
+    borderWidth: 1,
+    borderColor: cores.borda,
+    borderRadius: 999,
+    paddingHorizontal: 2,
+  },
+  stepperBotao: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperTexto: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: cores.textoPrimario,
+  },
+  stepperValor: {
+    minWidth: 20,
+    textAlign: 'center',
+    fontSize: 13,
+    fontWeight: '600',
+    color: cores.textoPrimario,
   },
 });
