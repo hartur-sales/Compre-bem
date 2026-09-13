@@ -9,8 +9,11 @@ import {
   FlatList,
   TextInput,
   Keyboard,
+  type ImageSourcePropType,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+const imagemPadrao = require('./assets/icon.png') as ImageSourcePropType;
 
 const cores = {
   fundo: '#150B10',
@@ -28,17 +31,17 @@ export type Produto = {
   preco: number;
   categoria: string;
   descricao: string;
-  imagem: string;
+  imagem: ImageSourcePropType;
 };
 
-export const produtosMock: Produto[] = [
+export const produtosIniciais: Produto[] = [
   {
     id: 1,
     nome: 'Cadeira Confort Plus',
     preco: 349.9,
     categoria: 'Móveis',
     descricao: 'Cadeira ergonômica com apoio lombar, ideal para home office.',
-    imagem: 'https://placehold.co/100x100',
+    imagem: imagemPadrao,
   },
   {
     id: 2,
@@ -46,7 +49,7 @@ export const produtosMock: Produto[] = [
     preco: 589.0,
     categoria: 'Móveis',
     descricao: 'Mesa compacta com acabamento em madeira, cabe em espaços pequenos.',
-    imagem: 'https://placehold.co/100x100',
+    imagem: imagemPadrao,
   },
   {
     id: 3,
@@ -54,7 +57,7 @@ export const produtosMock: Produto[] = [
     preco: 79.9,
     categoria: 'Iluminação',
     descricao: 'Luminária LED com intensidade ajustável e braço flexível.',
-    imagem: 'https://placehold.co/100x100',
+    imagem: imagemPadrao,
   },
   {
     id: 4,
@@ -62,7 +65,7 @@ export const produtosMock: Produto[] = [
     preco: 129.9,
     categoria: 'Acessórios',
     descricao: 'Suporte ergonômico em alumínio, melhora a ventilação do notebook.',
-    imagem: 'https://placehold.co/100x100',
+    imagem: imagemPadrao,
   },
 ];
 
@@ -89,7 +92,7 @@ function ProdutoItem({
 
   return (
     <TouchableOpacity style={styles.item} onPress={onPress}>
-      <Image source={{ uri: produto.imagem }} style={styles.image} />
+      <Image source={produto.imagem} style={styles.image} />
       <View style={styles.info}>
         <Text style={styles.nome}>{produto.nome}</Text>
         <Text style={styles.categoria}>{produto.categoria}</Text>
@@ -133,7 +136,7 @@ export default function TelaListaProdutos({ navigation, produtos, onAdicionarPro
       preco: precoNumerico,
       categoria: 'Geral',
       descricao: 'Produto cadastrado pela equipe da loja.',
-      imagem: 'https://placehold.co/100x100',
+      imagem: imagemPadrao,
     });
     setNome('');
     setPreco('');
