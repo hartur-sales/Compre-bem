@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,9 +11,11 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from './App';
 
 const imagemPadrao = require('./assets/icon.png') as ImageSourcePropType;
+const CHAVE_FAVORITOS = '@compre_bem:favoritos';
 
 const cores = {
   fundo: '#1C1712',
@@ -49,7 +51,8 @@ export const produtosIniciais: Produto[] = [
     nome: 'Mesa para Escritório',
     preco: 589.0,
     categoria: 'Móveis',
-    descricao: 'Mesa compacta com acabamento em madeira, cabe em espaços pequenos.',
+    descricao:
+      'Mesa compacta com acabamento em madeira, cabe em espaços pequenos.',
     imagem: imagemPadrao,
   },
   {
@@ -57,7 +60,8 @@ export const produtosIniciais: Produto[] = [
     nome: 'Luminária de Mesa LED',
     preco: 79.9,
     categoria: 'Iluminação',
-    descricao: 'Luminária LED com intensidade ajustável e braço flexível.',
+    descricao:
+      'Luminária LED com intensidade ajustável e braço flexível.',
     imagem: imagemPadrao,
   },
   {
@@ -65,7 +69,8 @@ export const produtosIniciais: Produto[] = [
     nome: 'Suporte para Notebook',
     preco: 129.9,
     categoria: 'Acessórios',
-    descricao: 'Suporte ergonômico em alumínio, melhora a ventilação do notebook.',
+    descricao:
+      'Suporte ergonômico em alumínio, melhora a ventilação do notebook.',
     imagem: imagemPadrao,
   },
 ];
@@ -77,62 +82,113 @@ type Props = {
 };
 
 function ProdutoItem({
-                       produto,
-                       onPress,
-                     }: {
+  produto,
+  onPress,
+  favorito,
+  onAlternarFavorito,
+}: {
   produto: Produto;
   onPress: () => void;
+  favorito: boolean;
+  onAlternarFavorito: () => void;
 }) {
-  const [favorito, setFavorito] = useState(false);
   const [quantidade, setQuantidade] = useState(0);
 
   return (
-      <TouchableOpacity style={styles.item} onPress={onPress} activeOpacity={0.85}>
-        <Image source={produto.imagem} style={styles.image} />
-        <View style={styles.info}>
-          <Text style={styles.nome} numberOfLines={1}>
-            {produto.nome}
-          </Text>
-          <Text style={styles.categoria}>{produto.categoria}</Text>
-          <Text style={styles.preco}>R$ {produto.preco.toFixed(2)}</Text>
-        </View>
-        <View style={styles.acoes}>
-          <TouchableOpacity
-              style={styles.botaoFavorito}
-              onPress={() => setFavorito(!favorito)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+    <TouchableOpacity
+      style={styles.item}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <Image source={produto.imagem} style={styles.image} />
+
+      <View style={styles.info}>
+        <Text style={styles.nome} numberOfLines={1}>
+          {produto.nome}
+        </Text>
+
+        <Text style={styles.categoria}>{produto.categoria}</Text>
+
+        <Text style={styles.preco}>
+          R$ {produto.preco.toFixed(2)}
+        </Text>
+      </View>
+
+      <View style={styles.acoes}>
+        <TouchableOpacity
+          style={styles.botaoFavorito}
+          onPress={onAlternarFavorito}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text
+            style={[
+              styles.favoritoTexto,
+              favorito && styles.favoritoAtivo,
+            ]}
           >
-            <Text style={[styles.favoritoTexto, favorito && styles.favoritoAtivo]}>
-              {favorito ? '♥' : '♡'}
-            </Text>
+            {favorito ? '♥' : '♡'}
+          </Text>
+        </TouchableOpacity>
+
+        <View style={styles.stepper}>
+          <TouchableOpacity
+            style={styles.stepperBotao}
+            onPress={() =>
+              setQuantidade(Math.max(0, quantidade - 1))
+            }
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          >
+            <Text style={styles.stepperTexto}>−</Text>
           </TouchableOpacity>
-          <View style={styles.stepper}>
-            <TouchableOpacity
-                style={styles.stepperBotao}
-                onPress={() => setQuantidade(Math.max(0, quantidade - 1))}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            >
-              <Text style={styles.stepperTexto}>−</Text>
-            </TouchableOpacity>
-            <Text style={styles.stepperValor}>{quantidade}</Text>
-            <TouchableOpacity
-                style={styles.stepperBotao}
-                onPress={() => setQuantidade(quantidade + 1)}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            >
-              <Text style={styles.stepperTexto}>+</Text>
-            </TouchableOpacity>
-          </View>
+
+          <Text style={styles.stepperValor}>{quantidade}</Text>
+
+          <TouchableOpacity
+            style={styles.stepperBotao}
+            onPress={() => setQuantidade(quantidade + 1)}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          >
+            <Text style={styles.stepperTexto}>+</Text>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
   );
 }
 
-export default function TelaListaProdutos({ navigation, produtos, onAdicionarProduto }: Props) {
+export default function TelaListaProdutos({
+  navigation,
+  produtos,
+  onAdicionarProduto,
+}: Props) {
   const [nome, setNome] = useState('');
   const [preco, setPreco] = useState('');
   const [erro, setErro] = useState('');
+  const [favoritos, setFavoritos] = useState<number[]>([]);
   const inputPrecoRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem(CHAVE_FAVORITOS).then((salvo) => {
+      if (salvo) {
+        setFavoritos(JSON.parse(salvo));
+      }
+    });
+  }, []);
+
+  function alternarFavorito(id: number) {
+    setFavoritos((atual) => {
+      const novo = atual.includes(id)
+        ? atual.filter((favId) => favId !== id)
+        : [...atual, id];
+
+      AsyncStorage.setItem(
+        CHAVE_FAVORITOS,
+        JSON.stringify(novo)
+      );
+
+      return novo;
+    });
+  }
 
   function validarESalvar() {
     if (nome.trim() === '') {
@@ -146,12 +202,20 @@ export default function TelaListaProdutos({ navigation, produtos, onAdicionarPro
     }
 
     const precoNumerico = Number(
-        preco.trim().replace(/\./g, '').replace(',', '.')
+      preco.trim().replace(/\./g, '').replace(',', '.')
     );
-    if (preco.trim() === '' || isNaN(precoNumerico) || precoNumerico <= 0) {
-      setErro('O preço precisa ser um número maior que zero (ex.: 89,90).');
+
+    if (
+      preco.trim() === '' ||
+      isNaN(precoNumerico) ||
+      precoNumerico <= 0
+    ) {
+      setErro(
+        'O preço precisa ser um número maior que zero (ex.: 89,90).'
+      );
       return;
     }
+
     onAdicionarProduto({
       id: Date.now(),
       nome,
@@ -160,6 +224,7 @@ export default function TelaListaProdutos({ navigation, produtos, onAdicionarPro
       descricao: 'Produto cadastrado pela equipe da loja.',
       imagem: imagemPadrao,
     });
+
     setNome('');
     setPreco('');
     setErro('');
@@ -167,47 +232,69 @@ export default function TelaListaProdutos({ navigation, produtos, onAdicionarPro
   }
 
   return (
-      <FlatList
-          style={styles.container}
-          contentContainerStyle={styles.listaConteudo}
-          data={produtos}
-          keyExtractor={(item) => String(item.id)}
-          ListHeaderComponent={
-            <View style={styles.cadastro}>
-              <Text style={styles.cadastroTitulo}>Novo produto</Text>
-              <TextInput
-                  style={styles.input}
-                  placeholder="Nome do novo produto"
-                  placeholderTextColor={cores.textoSecundario}
-                  value={nome}
-                  onChangeText={setNome}
-                  returnKeyType="next"
-                  onSubmitEditing={() => inputPrecoRef.current?.focus()}
-              />
-              <TextInput
-                  ref={inputPrecoRef}
-                  style={styles.input}
-                  placeholder="Preço (ex.: 89,90)"
-                  placeholderTextColor={cores.textoSecundario}
-                  value={preco}
-                  onChangeText={setPreco}
-                  keyboardType="decimal-pad"
-                  returnKeyType="done"
-                  onSubmitEditing={validarESalvar}
-              />
-              {erro !== '' && <Text style={styles.erro}>{erro}</Text>}
-              <TouchableOpacity style={styles.botao} onPress={validarESalvar} activeOpacity={0.85}>
-                <Text style={styles.botaoTexto}>Cadastrar produto</Text>
-              </TouchableOpacity>
-            </View>
-          }
-          renderItem={({ item }) => (
-              <ProdutoItem
-                  produto={item}
-                  onPress={() => navigation.navigate('DetalheProduto', { produtoId: item.id })}
-              />
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.listaConteudo}
+      data={produtos}
+      keyExtractor={(item) => String(item.id)}
+      ListHeaderComponent={
+        <View style={styles.cadastro}>
+          <Text style={styles.cadastroTitulo}>Novo produto</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Nome do novo produto"
+            placeholderTextColor={cores.textoSecundario}
+            value={nome}
+            onChangeText={setNome}
+            returnKeyType="next"
+            onSubmitEditing={() =>
+              inputPrecoRef.current?.focus()
+            }
+          />
+
+          <TextInput
+            ref={inputPrecoRef}
+            style={styles.input}
+            placeholder="Preço (ex.: 89,90)"
+            placeholderTextColor={cores.textoSecundario}
+            value={preco}
+            onChangeText={setPreco}
+            keyboardType="decimal-pad"
+            returnKeyType="done"
+            onSubmitEditing={validarESalvar}
+          />
+
+          {erro !== '' && (
+            <Text style={styles.erro}>{erro}</Text>
           )}
-      />
+
+          <TouchableOpacity
+            style={styles.botao}
+            onPress={validarESalvar}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.botaoTexto}>
+              Cadastrar produto
+            </Text>
+          </TouchableOpacity>
+        </View>
+      }
+      renderItem={({ item }) => (
+        <ProdutoItem
+          produto={item}
+          favorito={favoritos.includes(item.id)}
+          onAlternarFavorito={() =>
+            alternarFavorito(item.id)
+          }
+          onPress={() =>
+            navigation.navigate('DetalheProduto', {
+              produtoId: item.id,
+            })
+          }
+        />
+      )}
+    />
   );
 }
 
