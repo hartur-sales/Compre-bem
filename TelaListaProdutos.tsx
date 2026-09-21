@@ -15,7 +15,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { RootStackParamList } from './App';
 
 const imagemPadrao = require('./assets/icon.png') as ImageSourcePropType;
+
 const CHAVE_FAVORITOS = '@compre_bem:favoritos';
+const CHAVE_QUANTIDADES = '@compre_bem:quantidades';
 
 const cores = {
   fundo: '#1C1712',
@@ -43,7 +45,8 @@ export const produtosIniciais: Produto[] = [
     nome: 'Cadeira Confort Plus',
     preco: 349.9,
     categoria: 'Móveis',
-    descricao: 'Cadeira ergonômica com apoio lombar, ideal para home office.',
+    descricao:
+      'Cadeira ergonômica com apoio lombar, ideal para home office.',
     imagem: imagemPadrao,
   },
   {
@@ -86,14 +89,16 @@ function ProdutoItem({
   onPress,
   favorito,
   onAlternarFavorito,
+  quantidade,
+  onAlterarQuantidade,
 }: {
   produto: Produto;
   onPress: () => void;
   favorito: boolean;
   onAlternarFavorito: () => void;
+  quantidade: number;
+  onAlterarQuantidade: (novaQuantidade: number) => void;
 }) {
-  const [quantidade, setQuantidade] = useState(0);
-
   return (
     <TouchableOpacity
       style={styles.item}
@@ -107,7 +112,9 @@ function ProdutoItem({
           {produto.nome}
         </Text>
 
-        <Text style={styles.categoria}>{produto.categoria}</Text>
+        <Text style={styles.categoria}>
+          {produto.categoria}
+        </Text>
 
         <Text style={styles.preco}>
           R$ {produto.preco.toFixed(2)}
@@ -134,18 +141,22 @@ function ProdutoItem({
           <TouchableOpacity
             style={styles.stepperBotao}
             onPress={() =>
-              setQuantidade(Math.max(0, quantidade - 1))
+              onAlterarQuantidade(Math.max(0, quantidade - 1))
             }
             hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           >
             <Text style={styles.stepperTexto}>−</Text>
           </TouchableOpacity>
 
-          <Text style={styles.stepperValor}>{quantidade}</Text>
+          <Text style={styles.stepperValor}>
+            {quantidade}
+          </Text>
 
           <TouchableOpacity
             style={styles.stepperBotao}
-            onPress={() => setQuantidade(quantidade + 1)}
+            onPress={() =>
+              onAlterarQuantidade(quantidade + 1)
+            }
             hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
           >
             <Text style={styles.stepperTexto}>+</Text>
@@ -165,12 +176,24 @@ export default function TelaListaProdutos({
   const [preco, setPreco] = useState('');
   const [erro, setErro] = useState('');
   const [favoritos, setFavoritos] = useState<number[]>([]);
+  const [quantidades, setQuantidades] = useState<Record<number, number>>(
+    {}
+  );
+
   const inputPrecoRef = useRef<TextInput>(null);
 
   useEffect(() => {
     AsyncStorage.getItem(CHAVE_FAVORITOS).then((salvo) => {
       if (salvo) {
         setFavoritos(JSON.parse(salvo));
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    AsyncStorage.getItem(CHAVE_QUANTIDADES).then((salvo) => {
+      if (salvo) {
+        setQuantidades(JSON.parse(salvo));
       }
     });
   }, []);
@@ -183,6 +206,25 @@ export default function TelaListaProdutos({
 
       AsyncStorage.setItem(
         CHAVE_FAVORITOS,
+        JSON.stringify(novo)
+      );
+
+      return novo;
+    });
+  }
+
+  function alterarQuantidade(
+    id: number,
+    novaQuantidade: number
+  ) {
+    setQuantidades((atual) => {
+      const novo = {
+        ...atual,
+        [id]: novaQuantidade,
+      };
+
+      AsyncStorage.setItem(
+        CHAVE_QUANTIDADES,
         JSON.stringify(novo)
       );
 
@@ -239,7 +281,9 @@ export default function TelaListaProdutos({
       keyExtractor={(item) => String(item.id)}
       ListHeaderComponent={
         <View style={styles.cadastro}>
-          <Text style={styles.cadastroTitulo}>Novo produto</Text>
+          <Text style={styles.cadastroTitulo}>
+            Novo produto
+          </Text>
 
           <TextInput
             style={styles.input}
@@ -286,6 +330,10 @@ export default function TelaListaProdutos({
           favorito={favoritos.includes(item.id)}
           onAlternarFavorito={() =>
             alternarFavorito(item.id)
+          }
+          quantidade={quantidades[item.id] ?? 0}
+          onAlterarQuantidade={(novaQuantidade) =>
+            alterarQuantidade(item.id, novaQuantidade)
           }
           onPress={() =>
             navigation.navigate('DetalheProduto', {
