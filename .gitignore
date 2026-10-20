@@ -37,3 +37,6 @@ yarn-error.*
 
 # Claude / agents local
 .claude/
+
+# IntelliJ IDEA
+.idea/

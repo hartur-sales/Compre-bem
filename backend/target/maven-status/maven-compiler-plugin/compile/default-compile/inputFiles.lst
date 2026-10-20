@@ -1,0 +1,10 @@
+/home/hartur/IdeaProjects/Compre-bem/backend/src/main/java/com/murilo/comprebem/CompreBemApplication.java
+/home/hartur/IdeaProjects/Compre-bem/backend/src/main/java/com/murilo/comprebem/controller/ProdutoController.java
+/home/hartur/IdeaProjects/Compre-bem/backend/src/main/java/com/murilo/comprebem/entity/Produto.java
+/home/hartur/IdeaProjects/Compre-bem/backend/src/main/java/com/murilo/comprebem/entity/dto/CriarProdutoDTO.java
+/home/hartur/IdeaProjects/Compre-bem/backend/src/main/java/com/murilo/comprebem/entity/dto/ProdutoResponseDTO.java
+/home/hartur/IdeaProjects/Compre-bem/backend/src/main/java/com/murilo/comprebem/exception/EntidadeNotFound.java
+/home/hartur/IdeaProjects/Compre-bem/backend/src/main/java/com/murilo/comprebem/exception/ErroRespostaDTO.java
+/home/hartur/IdeaProjects/Compre-bem/backend/src/main/java/com/murilo/comprebem/exception/GlobalExceptionHandler.java
+/home/hartur/IdeaProjects/Compre-bem/backend/src/main/java/com/murilo/comprebem/repository/ProdutoRepository.java
+/home/hartur/IdeaProjects/Compre-bem/backend/src/main/java/com/murilo/comprebem/service/ProdutoService.java
