@@ -6,43 +6,53 @@ import com.hartur.comprebem.entity.dto.ProdutoResponseDTO;
 import com.hartur.comprebem.exception.EntidadeNotFound;
 import com.hartur.comprebem.repository.ProdutoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ProdutoService {
+
+    private static final int TAMANHO_PADRAO = 20;
+    private static final int TAMANHO_MAXIMO = 50;
+
     private final ProdutoRepository produtoRepository;
 
-    public ProdutoResponseDTO criar(CriarProdutoDTO produtoDTO) {
-        Produto produto = new Produto();
+    public Page<ProdutoResponseDTO> listarTodos(
+            String busca,
+            int page,
+            int size
+    ) {
+        int paginaCorrigida = Math.max(page, 0);
 
-        produto.setNome(produtoDTO.nome());
-        produto.setPreco(BigDecimal.valueOf(produtoDTO.preco()));
-        produto.setDescricao(produtoDTO.descricao());
-        produto.setCategoria(produtoDTO.categoria());
-        produto.setQuantidade(produtoDTO.quantidade());
+        int tamanhoCorrigido = size <= 0
+                ? TAMANHO_PADRAO
+                : Math.min(size, TAMANHO_MAXIMO);
 
-        produto = produtoRepository.save(produto);
-
-        produto.setImagem(
-                "https://picsum.photos/seed/"
-                        + produto.getId()
-                        + "/200"
+        Pageable pageable = PageRequest.of(
+                paginaCorrigida,
+                tamanhoCorrigido,
+                Sort.by(Sort.Direction.ASC, "nome")
         );
 
-        produto = produtoRepository.save(produto);
+        Page<Produto> produtos;
 
-        return new ProdutoResponseDTO(produto);
-    }
+        if (busca == null || busca.isBlank()) {
+            produtos = produtoRepository.findAll(pageable);
+        } else {
+            produtos = produtoRepository
+                    .findByNomeContainingIgnoreCase(
+                            busca.trim(),
+                            pageable
+                    );
+        }
 
-    public List<ProdutoResponseDTO> listarTodos() {
-        return produtoRepository.findAll()
-                .stream()
-                .map(ProdutoResponseDTO::new)
-                .toList();
+        return produtos.map(ProdutoResponseDTO::new);
     }
 
     public ProdutoResponseDTO buscar(Long id) {
@@ -59,12 +69,28 @@ public class ProdutoService {
                 );
     }
 
-    public List<ProdutoResponseDTO> buscarPorNome(String nome) {
-        return produtoRepository
-                .findAllByNomeContainingIgnoreCase(nome)
-                .stream()
-                .map(ProdutoResponseDTO::new)
-                .toList();
+    public ProdutoResponseDTO criar(CriarProdutoDTO produtoDTO) {
+        Produto produto = new Produto();
+
+        produto.setNome(produtoDTO.nome());
+        produto.setPreco(
+                BigDecimal.valueOf(produtoDTO.preco())
+        );
+        produto.setDescricao(produtoDTO.descricao());
+        produto.setCategoria(produtoDTO.categoria());
+        produto.setQuantidade(produtoDTO.quantidade());
+
+        produto = produtoRepository.save(produto);
+
+        produto.setImagem(
+                "https://picsum.photos/seed/"
+                        + produto.getId()
+                        + "/200"
+        );
+
+        produto = produtoRepository.save(produto);
+
+        return new ProdutoResponseDTO(produto);
     }
 
     public ProdutoResponseDTO atualizar(
@@ -89,9 +115,11 @@ public class ProdutoService {
             );
         }
 
-        return new ProdutoResponseDTO(
-                produtoRepository.save(produtoExistente)
+        Produto produtoAtualizado = produtoRepository.save(
+                produtoExistente
         );
+
+        return new ProdutoResponseDTO(produtoAtualizado);
     }
 
     public void deletar(Long id) {
