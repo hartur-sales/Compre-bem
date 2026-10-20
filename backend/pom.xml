@@ -8,7 +8,7 @@
         <version>4.1.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.murilo</groupId>
+    <groupId>com.hartur</groupId>
     <artifactId>compre-bem</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>compre-bem</name>
