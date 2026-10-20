@@ -1,4 +1,11 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from './App';
 import type { Produto } from './TelaListaProdutos';
@@ -15,33 +22,61 @@ const cores = {
 
 function DetalheProduto({ produto }: { produto: Produto }) {
   return (
-      <ScrollView style={styles.tela} contentContainerStyle={styles.container}>
-        <Image source={produto.imagem} style={styles.imagem} resizeMode="cover" />
-        <View style={styles.cartao}>
-          <Text style={styles.nome}>{produto.nome}</Text>
-          <Text style={styles.preco}>R$ {produto.preco.toFixed(2)}</Text>
-          <Text style={styles.descricao}>{produto.descricao}</Text>
-        </View>
-      </ScrollView>
+    <ScrollView
+      style={styles.tela}
+      contentContainerStyle={styles.container}
+    >
+      <Image
+        source={produto.imagem}
+        style={styles.imagem}
+        resizeMode="cover"
+      />
+
+      <View style={styles.cartao}>
+        <Text style={styles.nome}>{produto.nome}</Text>
+
+        <Text style={styles.preco}>
+          R$ {produto.preco.toFixed(2).replace('.', ',')}
+        </Text>
+
+        <Text style={styles.descricao}>
+          {produto.descricao}
+        </Text>
+      </View>
+    </ScrollView>
   );
 }
 
-type Props = NativeStackScreenProps<RootStackParamList, 'DetalheProduto'> & {
+type Props = NativeStackScreenProps<
+  RootStackParamList,
+  'DetalheProduto'
+> & {
   produtos: Produto[];
 };
 
-function TelaDetalheProduto({ route, navigation, produtos }: Props) {
+function TelaDetalheProduto({
+  route,
+  navigation,
+  produtos,
+}: Props) {
   const produtoId = route.params?.produtoId;
   const produto = produtos.find((item) => item.id === produtoId);
 
   if (!produto) {
     return (
-        <View style={styles.naoEncontrado}>
-          <Text style={styles.nome}>Produto não encontrado.</Text>
-          <TouchableOpacity style={styles.voltar} onPress={() => navigation.goBack()} activeOpacity={0.85}>
-            <Text style={styles.voltarTexto}>Voltar</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.naoEncontrado}>
+        <Text style={styles.nome}>
+          Produto não encontrado.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.voltar}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.voltarTexto}>Voltar</Text>
+        </TouchableOpacity>
+      </View>
     );
   }
 
