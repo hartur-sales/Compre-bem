@@ -19,7 +19,11 @@ public record ProdutoResponseDTO(
                 produto.getDescricao(),
                 produto.getCategoria(),
                 produto.getQuantidade(),
-                produto.getImagem()
+                produto.getImagem() != null
+                        ? produto.getImagem()
+                        : "https://picsum.photos/seed/"
+                                + produto.getId()
+                                + "/200"
         );
     }
 }
