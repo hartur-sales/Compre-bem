@@ -8,6 +8,7 @@ import {
   FlatList,
   TextInput,
   Keyboard,
+  Alert,
   type ImageSourcePropType,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -79,9 +80,12 @@ export const produtosIniciais: Produto[] = [
 ];
 
 type Props = {
-  navigation: NativeStackNavigationProp<RootStackParamList, 'ListaProdutos'>;
+  navigation: NativeStackNavigationProp<
+    RootStackParamList,
+    'ListaProdutos'
+  >;
   produtos: Produto[];
-  onAdicionarProduto: (produto: Produto) => void;
+  onAdicionarProduto: (produto: Produto) => Promise<void>;
 };
 
 function ProdutoItem({
@@ -100,26 +104,28 @@ function ProdutoItem({
   onAlterarQuantidade: (novaQuantidade: number) => void;
 }) {
   return (
-    <TouchableOpacity
-      style={styles.item}
-      onPress={onPress}
-      activeOpacity={0.85}
-    >
-      <Image source={produto.imagem} style={styles.image} />
+    <View style={styles.item}>
+      <TouchableOpacity
+        style={styles.areaProduto}
+        onPress={onPress}
+        activeOpacity={0.85}
+      >
+        <Image source={produto.imagem} style={styles.image} />
 
-      <View style={styles.info}>
-        <Text style={styles.nome} numberOfLines={1}>
-          {produto.nome}
-        </Text>
+        <View style={styles.info}>
+          <Text style={styles.nome} numberOfLines={1}>
+            {produto.nome}
+          </Text>
 
-        <Text style={styles.categoria}>
-          {produto.categoria}
-        </Text>
+          <Text style={styles.categoria}>
+            {produto.categoria}
+          </Text>
 
-        <Text style={styles.preco}>
-          R$ {produto.preco.toFixed(2)}
-        </Text>
-      </View>
+          <Text style={styles.preco}>
+            R$ {produto.preco.toFixed(2).replace('.', ',')}
+          </Text>
+        </View>
+      </TouchableOpacity>
 
       <View style={styles.acoes}>
         <TouchableOpacity
@@ -163,7 +169,7 @@ function ProdutoItem({
           </TouchableOpacity>
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -183,19 +189,35 @@ export default function TelaListaProdutos({
   const inputPrecoRef = useRef<TextInput>(null);
 
   useEffect(() => {
-    AsyncStorage.getItem(CHAVE_FAVORITOS).then((salvo) => {
-      if (salvo) {
-        setFavoritos(JSON.parse(salvo));
+    async function carregarFavoritos() {
+      try {
+        const salvo = await AsyncStorage.getItem(CHAVE_FAVORITOS);
+
+        if (salvo) {
+          setFavoritos(JSON.parse(salvo));
+        }
+      } catch (erro) {
+        console.error('Erro ao carregar favoritos:', erro);
       }
-    });
+    }
+
+    carregarFavoritos();
   }, []);
 
   useEffect(() => {
-    AsyncStorage.getItem(CHAVE_QUANTIDADES).then((salvo) => {
-      if (salvo) {
-        setQuantidades(JSON.parse(salvo));
+    async function carregarQuantidades() {
+      try {
+        const salvo = await AsyncStorage.getItem(CHAVE_QUANTIDADES);
+
+        if (salvo) {
+          setQuantidades(JSON.parse(salvo));
+        }
+      } catch (erro) {
+        console.error('Erro ao carregar quantidades:', erro);
       }
-    });
+    }
+
+    carregarQuantidades();
   }, []);
 
   function alternarFavorito(id: number) {
@@ -207,7 +229,9 @@ export default function TelaListaProdutos({
       AsyncStorage.setItem(
         CHAVE_FAVORITOS,
         JSON.stringify(novo)
-      );
+      ).catch((erro) => {
+        console.error('Erro ao salvar favoritos:', erro);
+      });
 
       return novo;
     });
@@ -226,30 +250,35 @@ export default function TelaListaProdutos({
       AsyncStorage.setItem(
         CHAVE_QUANTIDADES,
         JSON.stringify(novo)
-      );
+      ).catch((erro) => {
+        console.error('Erro ao salvar quantidades:', erro);
+      });
 
       return novo;
     });
   }
 
-  function validarESalvar() {
-    if (nome.trim() === '') {
+  async function validarESalvar() {
+    const nomeNormalizado = nome.trim();
+    const precoNormalizado = preco.trim();
+
+    if (nomeNormalizado === '') {
       setErro('O nome não pode ficar vazio.');
       return;
     }
 
-    if (preco.trim() === '') {
+    if (precoNormalizado === '') {
       setErro('O preço não pode ficar vazio.');
       return;
     }
 
     const precoNumerico = Number(
-      preco.trim().replace(/\./g, '').replace(',', '.')
+      precoNormalizado.replace(/\./g, '').replace(',', '.')
     );
 
     if (
-      preco.trim() === '' ||
-      isNaN(precoNumerico) ||
+      Number.isNaN(precoNumerico) ||
+      !Number.isFinite(precoNumerico) ||
       precoNumerico <= 0
     ) {
       setErro(
@@ -258,19 +287,28 @@ export default function TelaListaProdutos({
       return;
     }
 
-    onAdicionarProduto({
-      id: Date.now(),
-      nome,
-      preco: precoNumerico,
-      categoria: 'Geral',
-      descricao: 'Produto cadastrado pela equipe da loja.',
-      imagem: imagemPadrao,
-    });
+    try {
+      await onAdicionarProduto({
+        id: Date.now(),
+        nome: nomeNormalizado,
+        preco: precoNumerico,
+        categoria: 'Geral',
+        descricao: 'Produto cadastrado pela equipe da loja.',
+        imagem: imagemPadrao,
+      });
 
-    setNome('');
-    setPreco('');
-    setErro('');
-    Keyboard.dismiss();
+      setNome('');
+      setPreco('');
+      setErro('');
+      Keyboard.dismiss();
+    } catch (erro) {
+      console.error('Erro ao cadastrar produto:', erro);
+      setErro('Não foi possível cadastrar o produto.');
+      Alert.alert(
+        'Erro',
+        'Não foi possível cadastrar o produto no servidor.'
+      );
+    }
   }
 
   return (
@@ -409,6 +447,11 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
+  areaProduto: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   image: {
     width: 72,
     height: 72,
@@ -439,6 +482,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     height: 72,
+    marginLeft: 8,
   },
   botaoFavorito: {
     width: 28,
