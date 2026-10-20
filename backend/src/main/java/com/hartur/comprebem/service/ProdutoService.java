@@ -11,12 +11,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- *
- * @author Hartur
- * @date 19/10/2026
- * @brief Class ProdutoService
- */
 @Service
 @RequiredArgsConstructor
 public class ProdutoService {
@@ -33,14 +27,22 @@ public class ProdutoService {
 
         produto = produtoRepository.save(produto);
 
-        produto.setImagem("https://picsum.photos/seed/" + produto.getId() + "/200");
+        produto.setImagem(
+                "https://picsum.photos/seed/"
+                        + produto.getId()
+                        + "/200"
+        );
+
+        produto = produtoRepository.save(produto);
 
         return new ProdutoResponseDTO(produto);
     }
 
     public List<ProdutoResponseDTO> listarTodos() {
-        var produtos = produtoRepository.findAll();
-        return produtos.stream().map(ProdutoResponseDTO::new).toList();
+        return produtoRepository.findAll()
+                .stream()
+                .map(ProdutoResponseDTO::new)
+                .toList();
     }
 
     public ProdutoResponseDTO buscar(Long id) {
@@ -49,28 +51,47 @@ public class ProdutoService {
     }
 
     public Produto buscarPorId(Long id) {
-        return produtoRepository.findById(id).orElseThrow(
-                () -> new EntidadeNotFound("Produto não encontrado")
-        );
+        return produtoRepository.findById(id)
+                .orElseThrow(
+                        () -> new EntidadeNotFound(
+                                "Produto não encontrado"
+                        )
+                );
     }
 
     public List<ProdutoResponseDTO> buscarPorNome(String nome) {
-        return produtoRepository.findAllByNomeContainingIgnoreCase(nome)
+        return produtoRepository
+                .findAllByNomeContainingIgnoreCase(nome)
                 .stream()
                 .map(ProdutoResponseDTO::new)
                 .toList();
     }
 
-    public ProdutoResponseDTO atualizar(Long id, CriarProdutoDTO produto) {
+    public ProdutoResponseDTO atualizar(
+            Long id,
+            CriarProdutoDTO produtoDTO
+    ) {
         Produto produtoExistente = buscarPorId(id);
 
-        produtoExistente.setNome(produto.nome());
-        produtoExistente.setPreco(BigDecimal.valueOf(produto.preco()));
-        produtoExistente.setDescricao(produto.descricao());
-        produtoExistente.setCategoria(produto.categoria());
-        produtoExistente.setQuantidade(produto.quantidade());
+        produtoExistente.setNome(produtoDTO.nome());
+        produtoExistente.setPreco(
+                BigDecimal.valueOf(produtoDTO.preco())
+        );
+        produtoExistente.setDescricao(produtoDTO.descricao());
+        produtoExistente.setCategoria(produtoDTO.categoria());
+        produtoExistente.setQuantidade(produtoDTO.quantidade());
 
-        return new ProdutoResponseDTO(produtoRepository.save(produtoExistente));
+        if (produtoExistente.getImagem() == null) {
+            produtoExistente.setImagem(
+                    "https://picsum.photos/seed/"
+                            + produtoExistente.getId()
+                            + "/200"
+            );
+        }
+
+        return new ProdutoResponseDTO(
+                produtoRepository.save(produtoExistente)
+        );
     }
 
     public void deletar(Long id) {
