@@ -14,7 +14,7 @@ const cores = {
   textoPrimario: '#F3ECE0',
 };
 
-const API_URL = 'http://10.0.2.2:8080/api/produtos';
+const API_URL = 'http://localhost:8080/api/v1/produtos';
 
 export type RootStackParamList = {
   ListaProdutos: undefined;
