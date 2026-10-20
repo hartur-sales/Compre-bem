@@ -10,30 +10,37 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- *
- * @author Hartur
- * @date 19/10/2026
- * @brief Class GlobalExceptionHandler
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
     @ExceptionHandler(EntidadeNotFound.class)
-    public ResponseEntity<ErroRespostaDTO> handleEntidadeNotFound(EntidadeNotFound ex) {
+    public ResponseEntity<ErroRespostaDTO> handleEntidadeNotFound(
+            EntidadeNotFound ex
+    ) {
         ErroRespostaDTO erro = new ErroRespostaDTO(
                 HttpStatus.NOT_FOUND.value(),
                 "Não Encontrado",
                 ex.getMessage()
         );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(erro);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErroRespostaDTO> handleValidacao(MethodArgumentNotValidException ex) {
-        Map<String, String> errosPorCampo = new HashMap<>();
+    public ResponseEntity<ErroRespostaDTO> handleValidacao(
+            MethodArgumentNotValidException ex
+    ) {
+        Map<String, String> errosPorCampo =
+                new HashMap<>();
 
-        for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
-            errosPorCampo.put(fieldError.getField(), fieldError.getDefaultMessage());
+        for (FieldError fieldError :
+                ex.getBindingResult().getFieldErrors()) {
+            errosPorCampo.put(
+                    fieldError.getField(),
+                    fieldError.getDefaultMessage()
+            );
         }
 
         ErroRespostaDTO erro = new ErroRespostaDTO(
@@ -43,7 +50,8 @@ public class GlobalExceptionHandler {
                 errosPorCampo
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(erro);
     }
-
 }
