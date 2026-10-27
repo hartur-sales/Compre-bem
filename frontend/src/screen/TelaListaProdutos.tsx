@@ -10,35 +10,40 @@ import {
   Keyboard,
   Alert,
   type ImageSourcePropType,
+  type TextInputInstance,
 } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { RootStackParamList } from './App';
-
-const imagemPadrao = require('./assets/icon.png') as ImageSourcePropType;
+import type { RootStackParamList } from '../../App';
+import type {
+  Produto,
+  ProdutoApi,
+} from '../types/produto';
+import {
+  criarProduto,
+  getProdutos,
+} from '../service/produto-service';
+import { cores } from '../theme';
 
 const CHAVE_FAVORITOS = '@compre_bem:favoritos';
 const CHAVE_QUANTIDADES = '@compre_bem:quantidades';
-
-const cores = {
-  fundo: '#1C1712',
-  superficie: '#2A2119',
-  borda: '#4A3B2A',
-  destaque: '#7A4E1E',
-  textoPrimario: '#F3ECE0',
-  textoSecundario: '#B9A88F',
-  preco: '#8FB996',
-  erro: '#D96C5B',
-};
+const imagemPadrao = require('../../assets/icon.png') as ImageSourcePropType;
 
 type Props = {
   navigation: NativeStackNavigationProp<
     RootStackParamList,
-    'ListaProdutos'
+    'TelaListaProdutos'
   >;
-  produtos: Produto[];
-  onAdicionarProduto: (produto: Produto) => Promise<void>;
 };
+
+function converterProduto(produto: ProdutoApi): Produto {
+  return {
+    ...produto,
+    imagem: produto.imagem
+      ? { uri: produto.imagem }
+      : imagemPadrao,
+  };
+}
 
 function ProdutoItem({
   produto,
@@ -127,18 +132,45 @@ function ProdutoItem({
 
 export default function TelaListaProdutos({
   navigation,
-  produtos,
-  onAdicionarProduto,
 }: Props) {
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [pagina, setPagina] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [carregando, setCarregando] = useState(true);
+  const [erroApi, setErroApi] = useState('');
+  const [versaoProdutos, setVersaoProdutos] = useState(0);
   const [nome, setNome] = useState('');
   const [preco, setPreco] = useState('');
+  const [descricao, setDescricao] = useState('');
+  const [categoria, setCategoria] = useState('');
+  const [busca, setBusca] = useState('');
   const [erro, setErro] = useState('');
   const [favoritos, setFavoritos] = useState<number[]>([]);
   const [quantidades, setQuantidades] = useState<Record<number, number>>(
     {}
   );
 
-  const inputPrecoRef = useRef<TextInput>(null);
+  const inputPrecoRef = useRef<TextInputInstance>(null);
+
+  useEffect(() => {
+    async function carregarProdutos() {
+      setCarregando(true);
+      setErroApi('');
+
+      try {
+        const dados = await getProdutos(pagina, busca);
+        setProdutos(dados.content.map(converterProduto));
+        setTotalPaginas(dados.totalPages);
+      } catch (erro) {
+        console.error('Não foi possível carregar os produtos:', erro);
+        setErroApi('Não foi possível carregar os produtos.');
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    carregarProdutos();
+  }, [pagina, busca, versaoProdutos]);
 
   useEffect(() => {
     async function carregarFavoritos() {
@@ -210,6 +242,11 @@ export default function TelaListaProdutos({
     });
   }
 
+  function pesquisar(novaBusca: string) {
+    setBusca(novaBusca);
+    setPagina(0);
+  }
+
   async function validarESalvar() {
     const nomeNormalizado = nome.trim();
     const precoNormalizado = preco.trim();
@@ -239,18 +276,29 @@ export default function TelaListaProdutos({
       return;
     }
 
+    const descricaoNormalizada = descricao.trim();
+    const categoriaNormalizada = categoria.trim();
+
+    if (descricaoNormalizada === '' || categoriaNormalizada === '') {
+      setErro('Preencha a descrição e a categoria.');
+      return;
+    }
+
     try {
-      await onAdicionarProduto({
-        id: Date.now(),
+      await criarProduto({
         nome: nomeNormalizado,
         preco: precoNumerico,
-        categoria: 'Geral',
-        descricao: 'Produto cadastrado pela equipe da loja.',
-        imagem: imagemPadrao,
+        categoria: categoriaNormalizada,
+        descricao: descricaoNormalizada,
+        quantidade: 1,
       });
 
+      setPagina(0);
+      setVersaoProdutos((atual) => atual + 1);
       setNome('');
       setPreco('');
+      setDescricao('');
+      setCategoria('');
       setErro('');
       Keyboard.dismiss();
     } catch (erro) {
@@ -271,6 +319,24 @@ export default function TelaListaProdutos({
       keyExtractor={(item) => String(item.id)}
       ListHeaderComponent={
         <View style={styles.cadastro}>
+          <TextInput
+            style={styles.input}
+            placeholder="Buscar produtos"
+            placeholderTextColor={cores.textoSecundario}
+            value={busca}
+            onChangeText={setBusca}
+            onSubmitEditing={() => pesquisar(busca)}
+            returnKeyType="search"
+          />
+
+          <TouchableOpacity
+            style={styles.botaoSecundario}
+            onPress={() => pesquisar(busca)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.botaoTexto}>Buscar</Text>
+          </TouchableOpacity>
+
           <Text style={styles.cadastroTitulo}>
             Novo produto
           </Text>
@@ -299,6 +365,23 @@ export default function TelaListaProdutos({
             onSubmitEditing={validarESalvar}
           />
 
+          <TextInput
+            style={styles.input}
+            placeholder="Categoria"
+            placeholderTextColor={cores.textoSecundario}
+            value={categoria}
+            onChangeText={setCategoria}
+          />
+
+          <TextInput
+            style={[styles.input, styles.inputMultiline]}
+            placeholder="Descrição"
+            placeholderTextColor={cores.textoSecundario}
+            value={descricao}
+            onChangeText={setDescricao}
+            multiline
+          />
+
           {erro !== '' && (
             <Text style={styles.erro}>{erro}</Text>
           )}
@@ -312,6 +395,55 @@ export default function TelaListaProdutos({
               Cadastrar produto
             </Text>
           </TouchableOpacity>
+
+          {carregando && (
+            <Text style={styles.status}>Carregando produtos...</Text>
+          )}
+
+          {erroApi !== '' && (
+            <Text style={styles.erro}>{erroApi}</Text>
+          )}
+
+          {!carregando && produtos.length === 0 && erroApi === '' && (
+            <Text style={styles.status}>Nenhum produto encontrado.</Text>
+          )}
+
+          {totalPaginas > 1 && (
+            <View style={styles.paginacao}>
+              <TouchableOpacity
+                disabled={pagina === 0}
+                onPress={() => setPagina(pagina - 1)}
+              >
+                <Text
+                  style={[
+                    styles.paginacaoTexto,
+                    pagina === 0 && styles.paginacaoDesabilitada,
+                  ]}
+                >
+                  Anterior
+                </Text>
+              </TouchableOpacity>
+
+              <Text style={styles.status}>
+                Página {pagina + 1} de {totalPaginas}
+              </Text>
+
+              <TouchableOpacity
+                disabled={pagina >= totalPaginas - 1}
+                onPress={() => setPagina(pagina + 1)}
+              >
+                <Text
+                  style={[
+                    styles.paginacaoTexto,
+                    pagina >= totalPaginas - 1 &&
+                      styles.paginacaoDesabilitada,
+                  ]}
+                >
+                  Próxima
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       }
       renderItem={({ item }) => (
@@ -326,7 +458,7 @@ export default function TelaListaProdutos({
             alterarQuantidade(item.id, novaQuantidade)
           }
           onPress={() =>
-            navigation.navigate('DetalheProduto', {
+            navigation.navigate('TelaDetalheProduto', {
               produtoId: item.id,
             })
           }
@@ -367,6 +499,35 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     color: cores.textoPrimario,
     backgroundColor: cores.fundo,
+  },
+  inputMultiline: {
+    minHeight: 72,
+    textAlignVertical: 'top',
+  },
+  botaoSecundario: {
+    borderWidth: 1,
+    borderColor: cores.destaque,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  status: {
+    color: cores.textoSecundario,
+    textAlign: 'center',
+    fontSize: 13,
+  },
+  paginacao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  paginacaoTexto: {
+    color: cores.textoPrimario,
+    fontWeight: '700',
+  },
+  paginacaoDesabilitada: {
+    color: cores.textoSecundario,
   },
   erro: {
     color: cores.erro,

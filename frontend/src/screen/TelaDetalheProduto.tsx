@@ -6,19 +6,14 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import { useEffect, useState } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from './App';
-import type { Produto } from './TelaListaProdutos';
+import type { RootStackParamList } from '../../App';
+import { getProduto } from '../service/produto-service';
+import type { Produto } from '../types/produto';
+import { cores } from '../theme';
 
-const cores = {
-  fundo: '#1C1712',
-  superficie: '#2A2119',
-  borda: '#4A3B2A',
-  destaque: '#7A4E1E',
-  textoPrimario: '#F3ECE0',
-  textoSecundario: '#B9A88F',
-  preco: '#8FB996',
-};
+const imagemPadrao = require('../../assets/icon.png');
 
 function DetalheProduto({ produto }: { produto: Produto }) {
   return (
@@ -49,24 +44,41 @@ function DetalheProduto({ produto }: { produto: Produto }) {
 
 type Props = NativeStackScreenProps<
   RootStackParamList,
-  'DetalheProduto'
-> & {
-  produtos: Produto[];
-};
+  'TelaDetalheProduto'
+>;
 
 function TelaDetalheProduto({
   route,
   navigation,
-  produtos,
 }: Props) {
-  const produtoId = route.params?.produtoId;
-  const produto = produtos.find((item) => item.id === produtoId);
+  const produtoId = route.params.produtoId;
+  const [produto, setProduto] = useState<Produto | null>(null);
+  const [erro, setErro] = useState('');
+
+  useEffect(() => {
+    async function carregarProduto() {
+      try {
+        const produtoApi = await getProduto(produtoId);
+        setProduto({
+          ...produtoApi,
+          imagem: produtoApi.imagem
+            ? { uri: produtoApi.imagem }
+            : imagemPadrao,
+        });
+      } catch (erro) {
+        console.error('Não foi possível carregar o produto:', erro);
+        setErro('Não foi possível carregar o produto.');
+      }
+    }
+
+    carregarProduto();
+  }, [produtoId]);
 
   if (!produto) {
     return (
       <View style={styles.naoEncontrado}>
         <Text style={styles.nome}>
-          Produto não encontrado.
+          {erro || 'Carregando produto...'}
         </Text>
 
         <TouchableOpacity
