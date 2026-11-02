@@ -143,10 +143,11 @@ export default function TelaListaProdutos({
   const [preco, setPreco] = useState('');
   const [descricao, setDescricao] = useState('');
   const [categoria, setCategoria] = useState('');
+  const [textoBusca, setTextoBusca] = useState('');
   const [busca, setBusca] = useState('');
   const [erro, setErro] = useState('');
-  const [favoritos, setFavoritos] = useState<number[]>([]);
-  const [quantidades, setQuantidades] = useState<Record<number, number>>(
+  const [favoritos, setFavoritos] = useState<string[]>([]);
+  const [quantidades, setQuantidades] = useState<Record<string, number>>(
     {}
   );
 
@@ -178,7 +179,11 @@ export default function TelaListaProdutos({
         const salvo = await AsyncStorage.getItem(CHAVE_FAVORITOS);
 
         if (salvo) {
-          setFavoritos(JSON.parse(salvo));
+          const favoritosSalvos: unknown = JSON.parse(salvo);
+
+          if (Array.isArray(favoritosSalvos)) {
+            setFavoritos(favoritosSalvos.map(String));
+          }
         }
       } catch (erro) {
         console.error('Erro ao carregar favoritos:', erro);
@@ -204,11 +209,11 @@ export default function TelaListaProdutos({
     carregarQuantidades();
   }, []);
 
-  function alternarFavorito(id: number) {
+  function alternarFavorito(produtoId: string) {
     setFavoritos((atual) => {
-      const novo = atual.includes(id)
-        ? atual.filter((favId) => favId !== id)
-        : [...atual, id];
+      const novo = atual.includes(produtoId)
+        ? atual.filter((favId) => favId !== produtoId)
+        : [...atual, produtoId];
 
       AsyncStorage.setItem(
         CHAVE_FAVORITOS,
@@ -222,13 +227,13 @@ export default function TelaListaProdutos({
   }
 
   function alterarQuantidade(
-    id: number,
+    produtoId: string,
     novaQuantidade: number
   ) {
     setQuantidades((atual) => {
       const novo = {
         ...atual,
-        [id]: novaQuantidade,
+        [produtoId]: novaQuantidade,
       };
 
       AsyncStorage.setItem(
@@ -316,22 +321,22 @@ export default function TelaListaProdutos({
       style={styles.container}
       contentContainerStyle={styles.listaConteudo}
       data={produtos}
-      keyExtractor={(item) => String(item.id)}
+      keyExtractor={(item) => item.produtoId}
       ListHeaderComponent={
         <View style={styles.cadastro}>
           <TextInput
             style={styles.input}
             placeholder="Buscar produtos"
             placeholderTextColor={cores.textoSecundario}
-            value={busca}
-            onChangeText={setBusca}
-            onSubmitEditing={() => pesquisar(busca)}
+            value={textoBusca}
+            onChangeText={setTextoBusca}
+            onSubmitEditing={() => pesquisar(textoBusca)}
             returnKeyType="search"
           />
 
           <TouchableOpacity
             style={styles.botaoSecundario}
-            onPress={() => pesquisar(busca)}
+            onPress={() => pesquisar(textoBusca)}
             activeOpacity={0.85}
           >
             <Text style={styles.botaoTexto}>Buscar</Text>
@@ -449,17 +454,17 @@ export default function TelaListaProdutos({
       renderItem={({ item }) => (
         <ProdutoItem
           produto={item}
-          favorito={favoritos.includes(item.id)}
+          favorito={favoritos.includes(item.produtoId)}
           onAlternarFavorito={() =>
-            alternarFavorito(item.id)
+            alternarFavorito(item.produtoId)
           }
-          quantidade={quantidades[item.id] ?? 0}
+          quantidade={quantidades[item.produtoId] ?? 0}
           onAlterarQuantidade={(novaQuantidade) =>
-            alterarQuantidade(item.id, novaQuantidade)
+            alterarQuantidade(item.produtoId, novaQuantidade)
           }
           onPress={() =>
             navigation.navigate('TelaDetalheProduto', {
-              produtoId: item.id,
+              produtoId: item.produtoId,
             })
           }
         />

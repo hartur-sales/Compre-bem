@@ -46,6 +46,22 @@ public class ProdutoController {
         return ResponseEntity.ok(produtos);
     }
 
+    @GetMapping("/filtro")
+    public ResponseEntity<Page<ProdutoResponseDTO>> filtrar(
+            @RequestParam(required = false) String busca,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Page<ProdutoResponseDTO> produtos =
+                produtoService.listarTodos(
+                        busca,
+                        page,
+                        size
+                );
+
+        return ResponseEntity.ok(produtos);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ProdutoResponseDTO> obterPorId(
             @PathVariable Long id

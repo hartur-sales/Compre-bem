@@ -7,7 +7,7 @@ import { cores } from './src/theme';
 
 export type RootStackParamList = {
   TelaListaProdutos: undefined;
-  TelaDetalheProduto: { produtoId: number };
+  TelaDetalheProduto: { produtoId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

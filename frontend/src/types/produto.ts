@@ -1,7 +1,7 @@
 import type { ImageSourcePropType } from 'react-native';
 
 export type Produto = {
-  id: number;
+  produtoId: string;
   nome: string;
   preco: number;
   descricao: string;
@@ -22,8 +22,8 @@ export type ProdutoApi = Omit<Produto, 'imagem'> & {
   imagem?: string | null;
 };
 
-export type PaginaProdutos = {
-  content: ProdutoApi[];
+export type Page<T> = {
+  content: T[];
   totalPages: number;
   totalElements: number;
   number: number;

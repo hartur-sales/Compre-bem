@@ -3,7 +3,7 @@ package com.hartur.comprebem.entity.dto;
 import com.hartur.comprebem.entity.Produto;
 
 public record ProdutoResponseDTO(
-        Long id,
+        String produtoId,
         String nome,
         Double preco,
         String descricao,
@@ -13,7 +13,7 @@ public record ProdutoResponseDTO(
 ) {
     public ProdutoResponseDTO(Produto produto) {
         this(
-                produto.getId(),
+                String.valueOf(produto.getId()),
                 produto.getNome(),
                 produto.getPreco().doubleValue(),
                 produto.getDescricao(),
