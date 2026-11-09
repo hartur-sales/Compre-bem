@@ -1,8 +1,14 @@
-import { get, post } from './api';
+import {
+  del,
+  get,
+  post,
+  put,
+} from './api';
+
 import type {
   Page,
   ProdutoApi,
-  ProdutoParaCriar,
+  ProdutoParaSalvar,
 } from '../types/produto';
 
 export function getProdutos(
@@ -18,12 +24,30 @@ export function getProdutos(
   );
 }
 
-export function getProduto(produtoId: string): Promise<ProdutoApi> {
+export function getProduto(
+  produtoId: string
+): Promise<ProdutoApi> {
   return get<ProdutoApi>(`/produtos/${produtoId}`);
 }
 
 export function criarProduto(
-  produto: ProdutoParaCriar
+  produto: ProdutoParaSalvar
 ): Promise<ProdutoApi> {
   return post<ProdutoApi>('/produtos', produto);
+}
+
+export function atualizarProduto(
+  produtoId: string,
+  produto: ProdutoParaSalvar
+): Promise<ProdutoApi> {
+  return put<ProdutoApi>(
+    `/produtos/${produtoId}`,
+    produto
+  );
+}
+
+export function excluirProduto(
+  produtoId: string
+): Promise<void> {
+  return del(`/produtos/${produtoId}`);
 }
