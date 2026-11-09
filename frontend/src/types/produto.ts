@@ -10,7 +10,7 @@ export type Produto = {
   imagem: ImageSourcePropType;
 };
 
-export type ProdutoParaCriar = {
+export type ProdutoParaSalvar = {
   nome: string;
   preco: number;
   descricao: string;
@@ -18,7 +18,13 @@ export type ProdutoParaCriar = {
   quantidade: number;
 };
 
-export type ProdutoApi = Omit<Produto, 'imagem'> & {
+export type ProdutoApi = {
+  produtoId: string;
+  nome: string;
+  preco: number;
+  descricao: string;
+  categoria: string;
+  quantidade: number;
   imagem?: string | null;
 };
 
